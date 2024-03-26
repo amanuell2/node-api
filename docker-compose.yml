@@ -1,0 +1,72 @@
+version: '3.4'
+services:
+  ilift-refactored:
+    container_name: ilift-refactored
+    # restart: always
+    build:
+      context: .
+      # dockerfile: dev.Dockerfile
+      dockerfile: Dockerfile
+    # volumes:
+      # - api:/usr/src/app/
+      # - .:/usr/src/ilift/
+    ports:
+      - '8000:8000'
+      - '8001:8001'
+    links:
+      - ilift-redis-refactored
+      - ilift-mongo-refactored
+    depends_on:
+      - ilift-redis-refactored
+      - ilift-mongo-refactored
+    env_file:
+      - .env
+  ilift-mongo-refactored:
+    container_name: ilift-mongo-refactored
+    image: 'mongo:4.4'
+    logging:
+      driver: json-file
+    # ports:
+    #   - '27017:27017'
+    # privileged: true
+    hostname: ilift-mongo-refactored
+    volumes:
+      - ../ilift-refactored-data/db:/data/db
+      - ${PWD}/docker-entrypoint-initdb.d/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+      - ./mongod:/etc/ilift-mongod
+
+    #logging:
+    #  driver: none
+    # restart: always
+    # command: [--auth]
+    # entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "ilift", "--journal", "--dbpath", "/data/db", "--enableMajorityReadConcern", "false" ]
+    env_file:
+      - .env
+    command: ["--config", "/etc/ilift-mongod/mongod.conf", "--replSet", "${MONGO_REPLICA_SET_NAME}", "--bind_ip_all"]
+    # command: ["numactl","--interleave=all", "mongod", "--config", "/etc/ilift-mongod/mongod.conf", "--replSet", "${MONGO_REPLICA_SET_NAME}", "--bind_ip_all"]
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ilift_admin
+      MONGO_INITDB_ROOT_PASSWORD: Rzc**DuFD8CY
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}
+      MONGO_REPLICA_SET_NAME: ${MONGO_REPLICA_SET_NAME}
+    healthcheck:
+      test: test $$(echo "rs.initiate().ok || rs.status().ok" | mongo -u $${MONGO_INITDB_ROOT_USERNAME} -p $${MONGO_INITDB_ROOT_PASSWORD} --quiet) -eq 1
+      interval: 10s
+      start_period: 30s
+  ilift-redis-refactored:
+    container_name: ilift-redis-refactored
+    image: 'redis:4.0.11'
+    restart: always
+    # ports:
+    #     - 6379:6379
+  ilift-backup-refactored: # automated mongo backup
+    image: 'tibebesjs/mgob'
+    container_name: 'ilift-backup-refactored'
+    restart: always
+    #    ports:
+            #      - '8090:8090'
+    volumes:
+      - ./mgob/config:/config
+      - ../db-backups-refactored:/storage
+      - ./mgob/tmp:/tmp
+      - ./mgob/data:/data

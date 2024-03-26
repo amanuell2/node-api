@@ -1,0 +1,19 @@
+scheduler:
+  # run every day at 6:00 and 18:00 UTC
+  # cron: "0 6,18 */1 * *"
+  cron: "*/30 * * * *"
+  # number of backups to keep locally
+  retention: 200
+  # backup operation timeout in minutes
+  timeout: 120
+
+target:
+  # mongod IP or host name
+  host: "ilift-mongo-refactored"
+  # mongodb port
+  port: 27017
+  # mongodb database name, leave blank to backup all databases
+  database: "iliftmain-latest"
+  username: "ilift_admin"
+  password: "Rzc**DuFD8CY"
+  params: "--authenticationDatabase admin"

@@ -1,0 +1,6 @@
+node_modules/
+package-lock.json
+.DS_Store
+ilift*.gz
+ilift*.log
+mgob/data/mgob.db
